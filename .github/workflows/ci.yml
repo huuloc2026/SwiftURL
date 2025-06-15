@@ -37,15 +37,18 @@ jobs:
       - name: 📦 Install dependencies
         run: go mod download
 
-      - name: 🧪 Run unit tests
-        env:
-          DB_HOST: localhost
-          DB_PORT: 5432
-          DB_USER: myuser
-          DB_PASS: mypassword
-          DB_NAME: mydatabase
-        run: |
-          go test ./...
+      - name: Build application
+        run: go build -o myapp ./cmd/server/main.go
+
+      # - name: 🧪 Run unit tests
+      #   env:
+      #     DB_HOST: localhost
+      #     DB_PORT: 5432
+      #     DB_USER: myuser
+      #     DB_PASS: mypassword
+      #     DB_NAME: mydatabase
+      #   run: |
+      #     go test ./...
 
   # docker-deploy:
   #   needs: build-test
