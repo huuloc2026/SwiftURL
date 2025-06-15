@@ -3,8 +3,8 @@ package service
 import (
 	"math/rand"
 
-	"github.com/huuloc2026/SwiftURL.git/internal/repository"
-	"github.com/huuloc2026/SwiftURL.git/model"
+	"github.com/huuloc2026/SwiftURL/internal/repository"
+	"github.com/huuloc2026/SwiftURL/model"
 )
 
 type URLService interface {

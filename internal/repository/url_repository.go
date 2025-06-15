@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"github.com/huuloc2026/SwiftURL.git/model"
+	"github.com/huuloc2026/SwiftURL/model"
 	"github.com/jmoiron/sqlx"
 )
 

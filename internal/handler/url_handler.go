@@ -2,7 +2,7 @@ package handler
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/huuloc2026/SwiftURL.git/internal/service"
+	"github.com/huuloc2026/SwiftURL/internal/service"
 )
 
 type URLHandler struct {
