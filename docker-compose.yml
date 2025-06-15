@@ -1,22 +1,17 @@
+version: "3.8"
+
 services:
   db:
-    image: mysql:8.0 # You can specify a version, e.g., 8.0, 5.7, etc.
-    container_name: my-mysql-db
-    restart: always
+    image: postgres:15
+    container_name: swifturl-db
     environment:
-      MYSQL_ROOT_PASSWORD: myrootpassword 
-      MYSQL_DATABASE: mydatabase         
-      MYSQL_USER: myuser                  
-      MYSQL_PASSWORD: mypassword        
-    volumes:
-      - mysql_data:/var/lib/mysql
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydatabase
     ports:
-      - "3306:3306" 
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "myuser", "-pmypassword"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - "3306:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
 
 volumes:
-  mysql_data:
+  db_data:
