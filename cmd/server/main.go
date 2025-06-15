@@ -7,9 +7,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
-	"github.com/huuloc2026/SwiftURL/internal/handler"
-	"github.com/huuloc2026/SwiftURL/internal/repository"
-	"github.com/huuloc2026/SwiftURL/internal/service"
+
+	handler "github.com/huuloc2026/SwiftURL/internal/shorturl/delivery/http"
+	"github.com/huuloc2026/SwiftURL/internal/shorturl/repository"
+	"github.com/huuloc2026/SwiftURL/internal/shorturl/usecase"
 	"github.com/huuloc2026/SwiftURL/pkg/database"
 )
 
@@ -23,14 +24,14 @@ func main() {
 	})
 
 	// Global middlewares
-	app.Use(logger.New())  // log request
-	app.Use(recover.New()) // recover from panic
+	app.Use(logger.New())
+	app.Use(recover.New())
 
 	// Initialize dependencies
 	db := database.InitDB()
-	repo := repository.NewURLRepository(db)
-	service := service.NewURLService(repo)
-	h := handler.NewURLHandler(service)
+	urlRepo := repository.NewShortURLRepository(db)
+	urlUC := usecase.NewShortURLUsecase(urlRepo)
+	h := handler.NewURLHandler(urlUC)
 
 	// 🔍 Health check route
 	app.Get("/healthz", func(c *fiber.Ctx) error {
