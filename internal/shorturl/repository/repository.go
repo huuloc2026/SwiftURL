@@ -11,6 +11,7 @@ type ShortURLRepository interface {
 	Store(ctx context.Context, url *entity.ShortURL) error
 	FindByCode(ctx context.Context, code string) (*entity.ShortURL, error)
 	IncrementClick(ctx context.Context, code string) error
+	DeleteByCode(ctx context.Context, code string) error
 }
 
 type shortURLRepo struct {
@@ -22,9 +23,7 @@ func NewShortURLRepository(db *sqlx.DB) ShortURLRepository {
 }
 
 func (r *shortURLRepo) Store(ctx context.Context, url *entity.ShortURL) error {
-	query := `INSERT INTO short_urls (short_code, long_url, created_at, expire_at, clicks)
-	          VALUES ($1, $2, $3, $4, $5)`
-	_, err := r.db.ExecContext(ctx, query,
+	_, err := r.db.ExecContext(ctx, sqlInsertShortURL,
 		url.ShortCode,
 		url.LongURL,
 		url.CreatedAt,
@@ -36,8 +35,8 @@ func (r *shortURLRepo) Store(ctx context.Context, url *entity.ShortURL) error {
 
 func (r *shortURLRepo) FindByCode(ctx context.Context, code string) (*entity.ShortURL, error) {
 	var url entity.ShortURL
-	query := `SELECT * FROM short_urls WHERE short_code = $1 LIMIT 1`
-	err := r.db.GetContext(ctx, &url, query, code)
+
+	err := r.db.GetContext(ctx, &url, sqlFindByCode, code)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +44,29 @@ func (r *shortURLRepo) FindByCode(ctx context.Context, code string) (*entity.Sho
 }
 
 func (r *shortURLRepo) IncrementClick(ctx context.Context, code string) error {
-	query := `UPDATE short_urls SET clicks = clicks + 1 WHERE short_code = $1`
-	_, err := r.db.ExecContext(ctx, query, code)
+
+	_, err := r.db.ExecContext(ctx, sqlIncrementClick, code)
 	return err
+}
+
+func (r *shortURLRepo) ExistsByCode(ctx context.Context, code string) (bool, error) {
+	var exists bool
+
+	err := r.db.GetContext(ctx, &exists, sqlExistsByCode, code)
+	return exists, err
+}
+
+func (r *shortURLRepo) DeleteByCode(ctx context.Context, code string) error {
+	_, err := r.db.ExecContext(ctx, sqlDeleteByCode, code)
+	return err
+}
+
+func (r *shortURLRepo) FindValidByCode(ctx context.Context, code string) (*entity.ShortURL, error) {
+	var url entity.ShortURL
+
+	err := r.db.GetContext(ctx, &url, sqlFindValidByCode, code)
+	if err != nil {
+		return nil, err
+	}
+	return &url, nil
 }

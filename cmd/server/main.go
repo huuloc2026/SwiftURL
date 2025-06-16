@@ -41,6 +41,7 @@ func main() {
 				"message": err.Error(),
 			})
 		}
+
 		return c.JSON(fiber.Map{
 			"status": "ok",
 		})
@@ -48,7 +49,7 @@ func main() {
 	// Group all API routes under /api
 	api := app.Group("/api")
 
-	api.Post("/shorten", h.ShortenURL)
+	api.Post("/shorten", h.CreateShortURL)
 	api.Get("/:code", h.ResolveURL)
 
 	// Start server

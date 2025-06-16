@@ -5,13 +5,15 @@ import (
 	"time"
 )
 
-const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+var charset = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 
 func GenerateShortCode(length int) string {
-	rand.Seed(time.Now().UnixNano())
-	code := make([]byte, length)
+
+	seededRand := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	code := make([]rune, length)
 	for i := range code {
-		code[i] = charset[rand.Intn(len(charset))]
+		code[i] = charset[seededRand.Intn(len(charset))]
 	}
 	return string(code)
 }

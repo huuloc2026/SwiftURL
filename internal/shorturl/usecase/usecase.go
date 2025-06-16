@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/huuloc2026/SwiftURL/internal/entity"
@@ -10,8 +11,10 @@ import (
 )
 
 type ShortURLUsecase interface {
+	Generate(ctx context.Context, longURL string, customCode *string, expireAt *time.Time) (string, error)
 	Shorten(ctx context.Context, longURL string) (*entity.ShortURL, error)
 	Resolve(ctx context.Context, shortCode string) (*entity.ShortURL, error)
+	Delete(ctx context.Context, code string) error
 }
 
 type shortURLUsecase struct {
@@ -24,6 +27,7 @@ func NewShortURLUsecase(repo repository.ShortURLRepository) ShortURLUsecase {
 
 func (u *shortURLUsecase) Shorten(ctx context.Context, longURL string) (*entity.ShortURL, error) {
 	code := utils.GenerateShortCode(6)
+
 	now := time.Now()
 
 	url := &entity.ShortURL{
@@ -32,7 +36,7 @@ func (u *shortURLUsecase) Shorten(ctx context.Context, longURL string) (*entity.
 		CreatedAt: now,
 		Clicks:    0,
 	}
-
+	//TODO: DISABLE FOR TESTING ALGORITHM - DONT INSERT TO REPO
 	err := u.repo.Store(ctx, url)
 	if err != nil {
 		return nil, err
@@ -40,11 +44,50 @@ func (u *shortURLUsecase) Shorten(ctx context.Context, longURL string) (*entity.
 	return url, nil
 }
 
-func (u *shortURLUsecase) Resolve(ctx context.Context, shortCode string) (*entity.ShortURL, error) {
-	url, err := u.repo.FindByCode(ctx, shortCode)
+func (u *shortURLUsecase) Generate(ctx context.Context, longURL string, customCode *string, expireAt *time.Time) (string, error) {
+	var code string
+	if customCode != nil {
+		// Custom code → kiểm tra đã tồn tại chưa
+		existing, err := u.repo.FindByCode(ctx, *customCode)
+		if err == nil && existing != nil {
+			return "", errors.New("short code already exists")
+		}
+		code = *customCode
+	} else {
+		// Sinh mã ngẫu nhiên và kiểm trùng
+		for {
+			code = utils.GenerateShortCode(8)
+			existing, _ := u.repo.FindByCode(ctx, code)
+			if existing == nil {
+				break
+			}
+		}
+	}
+
+	short := &entity.ShortURL{
+		ShortCode: code,
+		LongURL:   longURL,
+		CreatedAt: time.Now(),
+		ExpireAt:  expireAt,
+		Clicks:    0,
+	}
+	if err := u.repo.Store(ctx, short); err != nil {
+		return "", err
+	}
+	return code, nil
+}
+
+func (u *shortURLUsecase) Resolve(ctx context.Context, code string) (*entity.ShortURL, error) {
+	url, err := u.repo.FindByCode(ctx, code)
 	if err != nil {
 		return nil, err
 	}
-	_ = u.repo.IncrementClick(ctx, shortCode) // Không chặn user nếu lỗi log
+	if url.ExpireAt != nil && url.ExpireAt.Before(time.Now()) {
+		return nil, errors.New("short url expired")
+	}
+	_ = u.repo.IncrementClick(ctx, code)
 	return url, nil
+}
+func (u *shortURLUsecase) Delete(ctx context.Context, code string) error {
+	return u.repo.DeleteByCode(ctx, code)
 }
