@@ -96,8 +96,14 @@ shortener-app/
 │   │   └── model.go
 ├── pkg/                      # Shared packages (db, utils, etc.)
 │   ├── database/postgres.go  # DB initialization and migration
+│   ├── cache/redis.go  # DB initialization and migration
+│   ├── jwt/jwt.go  # DB initialization and migration
+│   ├── response/response.go  # DB initialization and migration
 │   └── utils/generator.go    # Short code generator
 ├── go.mod
+├── .env.example.mod
+├── Dockerfile.yml
+├── docker-compose.yml
 └── README.md
 ```
 
@@ -117,7 +123,7 @@ shortener-app/
 
 - Go 1.20+
 - PostgreSQL 13+
-- Git
+- Redis 7.2
 
 ---
 
@@ -155,7 +161,11 @@ createdb shorturl
 The first time you run the app, it will automatically execute `migrations/init.sql`:
 
 ```bash
-go run cmd/main.go
+go run cmd/server/main.go
+```
+
+```bash
+air
 ```
 
 You'll see:
@@ -163,6 +173,7 @@ You'll see:
 ```
 📦 Running init.sql migration...
 ✅ Database initialized.
+✅ Redis connected:
 ```
 
 ---
@@ -193,7 +204,7 @@ POST /api/shorten
 
 ```json
 {
-  "url": "https://example.com"
+  "long_url": "https://example.com"
 }
 ```
 
@@ -225,7 +236,7 @@ GET /api/aB12Cd → 301 Redirect → https://example.com
 ## 🧪 Testing with Postman
 
 * Set method to `POST`
-* URL: `http://localhost:8080/api/shorten`
+* URL: `/api/shorten`
 * Headers:
 
   * `Content-Type: application/json`
@@ -249,7 +260,7 @@ GET /api/aB12Cd → 301 Redirect → https://example.com
 
 ## 🧪 Coming Soon (Ideas)
 
-* [ ] Expiry time for short links
+* [x] Expiry time for short links
 * [ ] Admin panel with stats
 * [ ] QR code generation
 * [ ] Auth module (already scaffolded)
