@@ -8,32 +8,6 @@ SwiftURL is a simple and clean URL shortener service written in **Go**, built wi
 
 ---
 
-## 📁 Project Structure
-
-```
-shortener-app/
-├── cmd/ # Main entry point
-│ └── main.go
-├── migrations/ # SQL file for DB schema initialization
-│ └── init.sql
-├── internal/ # Main application logic
-│ ├── entity/ # Shared entity definitions
-│ ├── shorturl/ # ShortURL module
-│ │ ├── delivery/http/ # HTTP handlers
-│ │ ├── repository/ # SQLX implementation
-│ │ ├── usecase/ # Business logic
-│ │ └── model.go
-├── pkg/ # Shared packages (db, utils, etc.)
-│ ├── database/postgres.go # DB initialization and migration
-│ └── utils/generator.go # Short code generator
-├── go.mod
-└── README.md
-
-```
-
-
----
-
 ## 📦 Features
 
 - ✅ Generate short links for any valid long URL
@@ -43,40 +17,6 @@ shortener-app/
 - ♻️ Modular and testable Clean Architecture
 
 ---
-
-## ⚙️ Requirements
-
-- Go 1.20+
-- PostgreSQL 13+
-- Git
-
----
-
-## 🛠️ Setup Instructions
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/huuloc2026/SwiftURL.git
-cd SwiftURL
-```
-
-Here is a detailed `README.md` for your **URL Shortener project** using **Go (Fiber + SQLX + PostgreSQL)** with a **Clean Architecture** structure and file-based migration using `init.sql`.
-
----
-
-## 📘 README.md — SwiftURL: URL Shortener in Go
-
-
-# 🚀 SwiftURL - URL Shortener in Golang
-
-SwiftURL is a simple and clean URL shortener service written in **Go**, built with:
-- [Fiber](https://github.com/gofiber/fiber) as the web framework
-- [SQLX](https://github.com/jmoiron/sqlx) for PostgreSQL database access
-- Clean Architecture principles
-- Lightweight migration using raw SQL file (`init.sql`)
-
-
 
 ## 📁 Project Structure
 
@@ -100,6 +40,7 @@ shortener-app/
 │   ├── jwt/jwt.go  # DB initialization and migration
 │   ├── response/response.go  # DB initialization and migration
 │   └── utils/generator.go    # Short code generator
+├── tests/   
 ├── go.mod
 ├── .env.example.mod
 ├── Dockerfile.yml
@@ -107,16 +48,14 @@ shortener-app/
 └── README.md
 ```
 
----
+## 🛠️ Setup Instructions
 
-## 📦 Features
+### 1. Clone the repository
 
-- ✅ Generate short links for any valid long URL
-- 🔗 Resolve short links with redirect support
-- 📊 Track basic click count (optional)
-- 🧱 SQL-based schema using `init.sql`
-- ♻️ Modular and testable Clean Architecture
-
+```bash
+git clone https://github.com/huuloc2026/SwiftURL.git
+cd SwiftURL
+```
 ---
 
 ## ⚙️ Requirements
@@ -138,14 +77,21 @@ cd SwiftURL
 
 ---
 
-### 2. Configure your PostgreSQL connection
+### 2. Configure your PostgreSQL-Redis connection
 
 Edit the connection string in `pkg/database/postgres.go`:
 
 ```go
 dsn := "postgres://<user>:<password>@localhost:5432/<your_db>?sslmode=disable"
 ```
-
+```go
+rdb := redis.NewClient(&redis.Options{
+  Addr:     addr,
+  Username: username,
+  Password: password,
+  DB:       db,
+})
+```
 Alternatively, extract the DSN into environment variables.
 
 ---
@@ -231,24 +177,7 @@ Example:
 GET /api/aB12Cd → 301 Redirect → https://example.com
 ```
 
----
 
-## 🧪 Testing with Postman
-
-* Set method to `POST`
-* URL: `/api/shorten`
-* Headers:
-
-  * `Content-Type: application/json`
-* Body:
-
-```json
-{
-  "url": "https://example.com"
-}
-```
-
----
 
 ## 🧰 Useful Tips
 

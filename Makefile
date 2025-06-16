@@ -1,4 +1,7 @@
-.PHONY: test test-e2e
+.PHONY: start-docker test test-e2e
+
+start-docker:
+	docker compose up -d
 
 test:
 	go test ./... -v
