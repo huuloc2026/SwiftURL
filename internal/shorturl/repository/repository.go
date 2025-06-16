@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/huuloc2026/SwiftURL/internal/entity"
 	"github.com/jmoiron/sqlx"
@@ -12,6 +13,9 @@ type ShortURLRepository interface {
 	FindByCode(ctx context.Context, code string) (*entity.ShortURL, error)
 	IncrementClick(ctx context.Context, code string) error
 	DeleteByCode(ctx context.Context, code string) error
+
+	//CLICK LOG
+	InsertClickLog(ctx context.Context, log *entity.ClickLog) error
 }
 
 type shortURLRepo struct {
@@ -69,4 +73,21 @@ func (r *shortURLRepo) FindValidByCode(ctx context.Context, code string) (*entit
 		return nil, err
 	}
 	return &url, nil
+}
+
+func (r *shortURLRepo) InsertClickLog(ctx context.Context, log *entity.ClickLog) error {
+	var clickLog entity.ClickLog
+	fmt.Println(clickLog)
+	err := r.db.GetContext(ctx, &clickLog, queryInsertClickLog, log.ShortCode,
+		log.ClickedAt,
+		log.Referrer,
+		log.UserAgent,
+		log.DeviceType,
+		log.OS,
+		log.Browser,
+		log.Country,
+		log.City,
+		log.IPAddress)
+
+	return err
 }

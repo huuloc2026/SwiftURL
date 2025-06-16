@@ -5,21 +5,25 @@ import (
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
+
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 
+	"github.com/huuloc2026/SwiftURL/config"
+	"github.com/huuloc2026/SwiftURL/internal/routes"
 	handler "github.com/huuloc2026/SwiftURL/internal/shorturl/delivery/http"
 	"github.com/huuloc2026/SwiftURL/internal/shorturl/repository"
 	"github.com/huuloc2026/SwiftURL/internal/shorturl/usecase"
+	"github.com/huuloc2026/SwiftURL/pkg/cache"
 	"github.com/huuloc2026/SwiftURL/pkg/database"
 )
 
 func main() {
+	config.LoadEnv()
 	// Initialize Fiber app in debug mode
 	app := fiber.New(fiber.Config{
-		AppName: "SwiftURL",
-		Prefork: false,
-		// Enable debug mode
+		AppName:               "SwiftURL",
+		Prefork:               false,
 		DisableStartupMessage: false,
 	})
 
@@ -29,6 +33,8 @@ func main() {
 
 	// Initialize dependencies
 	db := database.InitDB()
+	rdb := cache.InitRedis()
+	_ = rdb
 	urlRepo := repository.NewShortURLRepository(db)
 	urlUC := usecase.NewShortURLUsecase(urlRepo)
 	h := handler.NewURLHandler(urlUC)
@@ -46,11 +52,7 @@ func main() {
 			"status": "ok",
 		})
 	})
-	// Group all API routes under /api
-	api := app.Group("/api")
-
-	api.Post("/shorten", h.CreateShortURL)
-	api.Get("/:code", h.ResolveURL)
+	routes.RegisterRoutes(app, h)
 
 	// Start server
 	log.Fatal(app.Listen(":8080"))

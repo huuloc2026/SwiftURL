@@ -10,3 +10,15 @@ type ShortURL struct {
 	ExpireAt  *time.Time `db:"expire_at"`
 	Clicks    int64      `db:"clicks"`
 }
+type ClickLog struct {
+	ShortCode  string
+	ClickedAt  time.Time
+	Referrer   string
+	UserAgent  string
+	DeviceType string
+	OS         string
+	Browser    string
+	IPAddress  string
+	Country    string
+	City       string
+}

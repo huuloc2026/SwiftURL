@@ -6,11 +6,17 @@ import (
 	"os"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
 var DB *sqlx.DB
 
+func init() {
+	if err := godotenv.Load(); err != nil {
+		log.Println("⚠️  .env file not found, using system env")
+	}
+}
 func InitDB() *sqlx.DB {
 	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
 		getEnv("DB_USER", "myuser"),

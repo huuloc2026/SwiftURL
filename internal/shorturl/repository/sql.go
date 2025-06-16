@@ -30,3 +30,15 @@ const (
 		LIMIT 1
 	`
 )
+
+const (
+	tableClickLog = "click_logs"
+
+	queryInsertClickLog = `
+		INSERT INTO ` + tableClickLog + ` (
+			short_code, clicked_at, referrer, user_agent,
+			device_type, os, browser, country, city, ip_address
+		)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+	`
+)

@@ -1,11 +1,14 @@
 package handler
 
 import (
+	"context"
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/huuloc2026/SwiftURL/internal/shorturl/usecase"
+	"github.com/huuloc2026/SwiftURL/pkg/utils"
 )
 
 type URLHandler struct {
@@ -90,13 +93,21 @@ func (h *URLHandler) CreateShortURL(ctx *fiber.Ctx) error {
 
 func (h *URLHandler) ResolveURL(c *fiber.Ctx) error {
 	code := c.Params("code")
-
 	result, err := h.usecase.Resolve(c.Context(), code)
 	if err != nil {
 		return c.Status(http.StatusNotFound).JSON(fiber.Map{
 			"error": "short code not found",
 		})
 	}
+	// ✅ Đọc header/IP vào biến trước khi vào goroutine
+
+	// ✅ Launch goroutine an toàn
+	// 👇 Collect meta safely
+	meta := utils.ExtractClickMetaFromCtx(c, code)
+	fmt.Println(meta)
+
+	// 👇 Launch safe async tracking
+	go h.usecase.TrackClick(context.Background(), meta)
 	return c.Redirect(result.LongURL, http.StatusMovedPermanently)
 }
 

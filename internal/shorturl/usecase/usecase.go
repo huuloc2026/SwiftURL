@@ -15,6 +15,8 @@ type ShortURLUsecase interface {
 	Shorten(ctx context.Context, longURL string) (*entity.ShortURL, error)
 	Resolve(ctx context.Context, shortCode string) (*entity.ShortURL, error)
 	Delete(ctx context.Context, code string) error
+	//TrackClick
+	TrackClick(ctx context.Context, log *entity.ClickLog) error
 }
 
 type shortURLUsecase struct {
@@ -77,6 +79,10 @@ func (u *shortURLUsecase) Generate(ctx context.Context, longURL string, customCo
 	return code, nil
 }
 
+func (u *shortURLUsecase) Delete(ctx context.Context, code string) error {
+	return u.repo.DeleteByCode(ctx, code)
+}
+
 func (u *shortURLUsecase) Resolve(ctx context.Context, code string) (*entity.ShortURL, error) {
 	url, err := u.repo.FindByCode(ctx, code)
 	if err != nil {
@@ -86,8 +92,15 @@ func (u *shortURLUsecase) Resolve(ctx context.Context, code string) (*entity.Sho
 		return nil, errors.New("short url expired")
 	}
 	_ = u.repo.IncrementClick(ctx, code)
+
 	return url, nil
 }
-func (u *shortURLUsecase) Delete(ctx context.Context, code string) error {
-	return u.repo.DeleteByCode(ctx, code)
+
+func (u *shortURLUsecase) TrackClick(ctx context.Context, log *entity.ClickLog) error {
+	geo, err := utils.LookupIP(log.IPAddress)
+	if err == nil {
+		log.Country = geo.Country
+		log.City = geo.City
+	}
+	return u.repo.InsertClickLog(ctx, log)
 }
