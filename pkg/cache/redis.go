@@ -19,7 +19,7 @@ func InitRedis() *redis.Client {
 
 	addr := os.Getenv("REDIS_ADDR")
 	if addr == "" {
-		log.Fatal("❌ REDIS_ADDR is required (e.g. redis-cloud-host:port)")
+		addr = "localhost:6379"
 	}
 	username := os.Getenv("REDIS_USERNAME")
 	password := os.Getenv("REDIS_PASSWORD") // optional
