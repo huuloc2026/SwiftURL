@@ -1,198 +1,195 @@
-# 🚀 SwiftURL - URL Shortener in Golang
+# 🚀 SwiftURL - URL Shortener in Go
 
-SwiftURL is a simple and clean URL shortener service written in **Go**, built with:
-- [Fiber](https://github.com/gofiber/fiber) as the web framework
-- [SQLX](https://github.com/jmoiron/sqlx) for PostgreSQL database access
+SwiftURL is a clean, modular URL shortener service built with:
+
+- [Fiber](https://github.com/gofiber/fiber) web framework
+- [SQLX](https://github.com/jmoiron/sqlx) for PostgreSQL
 - Clean Architecture principles
-- Lightweight migration using raw SQL file (`init.sql`)
+- Simple SQL migrations
 
 ---
 
 ## 📦 Features
 
-- ✅ Generate short links for any valid long URL
-- 🔗 Resolve short links with redirect support
-- 📊 Track basic click count (optional)
-- 🧱 SQL-based schema using `init.sql`
-- ♻️ Modular and testable Clean Architecture
+- Generate short links for any valid URL
+- Resolve short links with redirect
+- Track click count and metadata
+- User registration, login, password reset (with OTP)
+- Modular, testable codebase
 
 ---
 
 ## 📁 Project Structure
 
 ```
-
-shortener-app/
-├── cmd/                       # Main entry point
-│   └── main.go
-├── migrations/               # SQL file for DB schema initialization
-│   └── init.sql
-├── internal/                 # Main application logic
-│   ├── entity/               # Shared entity definitions
-│   ├── shorturl/             # ShortURL module
-│   │   ├── delivery/http/    # HTTP handlers
-│   │   ├── repository/       # SQLX implementation
-│   │   ├── usecase/          # Business logic
-│   │   └── model.go
-├── pkg/                      # Shared packages (db, utils, etc.)
-│   ├── database/postgres.go  # DB initialization and migration
-│   ├── cache/redis.go  # DB initialization and migration
-│   ├── jwt/jwt.go  # DB initialization and migration
-│   ├── response/response.go  # DB initialization and migration
-│   └── utils/generator.go    # Short code generator
-├── tests/   
-├── go.mod
-├── .env.example.mod
-├── Dockerfile.yml
+SwiftURL/
+├── cmd/server/                  # Main entry point
+├── config/                      # Environment/config loading
+├── internal/
+│   ├── entity/                  # Shared entity definitions
+│   ├── shorturl/                # ShortURL module (delivery, repository, usecase)
+│   ├── user/                    # User module (delivery, repository, usecase)
+│   └── auth/                    # Auth module (delivery, usecase)
+├── pkg/
+│   ├── cache/                   # Redis cache
+│   ├── database/                # DB initialization/migration
+│   ├── response/                # Standard API responses
+│   └── utils/                   # Utilities (short code generator, etc.)
+├── migrations/                  # SQL schema
+├── tests/                       # Integration/unit tests
+├── Dockerfile
 ├── docker-compose.yml
+├── .env.example
 └── README.md
 ```
 
-## 🛠️ Setup Instructions
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/huuloc2026/SwiftURL.git
-cd SwiftURL
-```
 ---
 
 ## ⚙️ Requirements
 
 - Go 1.20+
 - PostgreSQL 13+
-- Redis 7.2
+- Redis 7.2+
 
 ---
 
-## 🛠️ Setup Instructions
+## 🛠️ Setup
 
-### 1. Clone the repository
+1. **Clone the repository**
 
-```bash
-git clone https://github.com/huuloc2026/SwiftURL.git
-cd SwiftURL
-```
+   ```bash
+   git clone https://github.com/huuloc2026/SwiftURL.git
+   cd SwiftURL
+   ```
 
----
+2. **Configure environment**
 
-### 2. Configure your PostgreSQL-Redis connection
+   Copy `.env.example` to `.env` and update values as needed.
 
-Edit the connection string in `pkg/database/postgres.go`:
+   ```bash
+   cp .env.example .env
+   ```
 
-```go
-dsn := "postgres://<user>:<password>@localhost:5432/<your_db>?sslmode=disable"
-```
-```go
-rdb := redis.NewClient(&redis.Options{
-  Addr:     addr,
-  Username: username,
-  Password: password,
-  DB:       db,
-})
-```
-Alternatively, extract the DSN into environment variables.
+3. **Start dependencies (Postgres, Redis) with Docker Compose**
 
----
+   ```bash
+   docker compose up -d
+   ```
 
-### 3. Create database and run migration
+4. **Run migrations and start the app**
 
-Make sure your PostgreSQL instance is running and create the database:
+   ```bash
+   go run cmd/server/main.go
+   ```
 
-```bash
-createdb shorturl
-```
+   Or use Air for live reload:
 
-The first time you run the app, it will automatically execute `migrations/init.sql`:
-
-```bash
-go run cmd/server/main.go
-```
-
-```bash
-air
-```
-
-You'll see:
-
-```
-📦 Running init.sql migration...
-✅ Database initialized.
-✅ Redis connected:
-```
+   ```bash
+   air
+   ```
 
 ---
 
 ## 🧪 API Endpoints
 
-### 🔍 Health check
+### Health Check
 
 ```
 GET /healthz
 ```
 
-Returns:
-
-```json
-{ "status": "ok" }
-```
-
----
-
-### ✂️ Shorten URL
+### Shorten URL
 
 ```
 POST /api/shorten
 ```
-
 **Body:**
-
 ```json
 {
   "long_url": "https://example.com"
 }
 ```
-
 **Response:**
-
 ```json
 {
-  "short_code": "aB12Cd",
-  "long_url": "https://example.com"
+  "short_code": "aB12Cd"
 }
 ```
 
----
-
-### 🔁 Redirect short URL
+### Redirect Short URL
 
 ```
-GET /api/:code
+GET /:code
 ```
+Redirects to the original URL.
 
-Example:
+### User Authentication
 
-```
-GET /api/aB12Cd → 301 Redirect → https://example.com
-```
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `POST /api/auth/forget-password`
+- `POST /api/auth/verify-otp`
+- `POST /api/auth/change-password`
 
-
-
-## 🧰 Useful Tips
-
-* Use `sqlx` with struct tags (`db:"field"`) for cleaner code.
-* Migrations are applied only once at app startup (`init.sql`).
-* Customize `short_code` length or charset in `pkg/utils/generator.go`.
+See the [API usage](#api-usage) section for example requests.
 
 ---
 
-## 🧪 Coming Soon (Ideas)
+## 🧰 Tips
 
-* [x] Expiry time for short links
-* [ ] Admin panel with stats
-* [ ] QR code generation
-* [ ] Auth module (already scaffolded)
+- All configuration is via `.env`
+- Migrations run automatically on startup
+- Use `/api/auth/*` for authentication endpoints
+
+---
+
+## 🧪 API Usage (Postman Examples)
+
+**Register:**
+```
+POST /api/auth/register
+{
+  "username": "testuser",
+  "email": "test@example.com",
+  "password": "yourpassword"
+}
+```
+
+**Login:**
+```
+POST /api/auth/login
+{
+  "email": "test@example.com",
+  "password": "yourpassword"
+}
+```
+
+**Forget Password:**
+```
+POST /api/auth/forget-password
+{
+  "email": "test@example.com"
+}
+```
+
+**Verify OTP:**
+```
+POST /api/auth/verify-otp
+{
+  "email": "test@example.com",
+  "otp": "123456"
+}
+```
+
+**Change Password:**
+```
+POST /api/auth/change-password
+{
+  "email": "test@example.com",
+  "otp": "123456",
+  "new_password": "newpassword"
+}
+```
 
 ---
 
