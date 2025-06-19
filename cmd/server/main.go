@@ -7,9 +7,6 @@ import (
 	"math/rand"
 	"net/http"
 	"sync"
-	"time"
-
-	"github.com/golang-jwt/jwt/v4"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -21,6 +18,7 @@ import (
 	urlrepo "github.com/huuloc2026/SwiftURL/internal/shorturl/repository"
 	urlusecase "github.com/huuloc2026/SwiftURL/internal/shorturl/usecase"
 	"github.com/huuloc2026/SwiftURL/pkg/database"
+	jwtService "github.com/huuloc2026/SwiftURL/pkg/jwt"
 
 	authhandler "github.com/huuloc2026/SwiftURL/internal/auth/delivery/http"
 	authusecase "github.com/huuloc2026/SwiftURL/internal/auth/usecase"
@@ -57,25 +55,6 @@ func (s *InMemoryOTPService) VerifyOTP(ctx context.Context, email, otp string) (
 	return false, nil
 }
 
-// --- Simple JWTService Implementation ---
-type SimpleJWTService struct {
-	secret string
-}
-
-func NewSimpleJWTService(secret string) *SimpleJWTService {
-	return &SimpleJWTService{secret: secret}
-}
-
-func (s *SimpleJWTService) GenerateToken(userID int64, username string, exp time.Duration) (string, error) {
-	claims := jwt.MapClaims{
-		"user_id":  userID,
-		"username": username,
-		"exp":      time.Now().Add(exp).Unix(),
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(s.secret))
-}
-
 func main() {
 	config.LoadEnv()
 	// Initialize Fiber app in debug mode
@@ -99,7 +78,7 @@ func main() {
 	// Initialize AuthHandler dependencies
 	userRepo := authrepo.NewUserRepository(db)
 	otpService := NewInMemoryOTPService()
-	jwtService := NewSimpleJWTService("your-secret-key")
+	jwtService := jwtService.NewSimpleJWTService("your-secret-key")
 	authUC := authusecase.NewAuthUsecase(userRepo, otpService, jwtService)
 	authH := authhandler.NewAuthHandler(authUC)
 
