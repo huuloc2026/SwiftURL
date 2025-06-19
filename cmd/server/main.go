@@ -1,8 +1,15 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
+	"sync"
+	"time"
+
+	"github.com/golang-jwt/jwt/v4"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -15,11 +22,59 @@ import (
 	urlusecase "github.com/huuloc2026/SwiftURL/internal/shorturl/usecase"
 	"github.com/huuloc2026/SwiftURL/pkg/database"
 
-	authhandler "github.com/huuloc2026/SwiftURL/internal/auth/handler"
+	authhandler "github.com/huuloc2026/SwiftURL/internal/auth/delivery/http"
 	authusecase "github.com/huuloc2026/SwiftURL/internal/auth/usecase"
 	authrepo "github.com/huuloc2026/SwiftURL/internal/user/repository"
-	// import your OTPService and JWTService implementations as needed
 )
+
+// --- Simple In-Memory OTPService Implementation ---
+type InMemoryOTPService struct {
+	store map[string]string
+	mu    sync.Mutex
+}
+
+func NewInMemoryOTPService() *InMemoryOTPService {
+	return &InMemoryOTPService{
+		store: make(map[string]string),
+	}
+}
+
+func (s *InMemoryOTPService) GenerateOTP(ctx context.Context, email string) (string, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	otp := fmt.Sprintf("%06d", rand.Intn(1000000))
+	s.store[email] = otp
+	return otp, nil
+}
+
+func (s *InMemoryOTPService) VerifyOTP(ctx context.Context, email, otp string) (bool, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.store[email] == otp {
+		delete(s.store, email)
+		return true, nil
+	}
+	return false, nil
+}
+
+// --- Simple JWTService Implementation ---
+type SimpleJWTService struct {
+	secret string
+}
+
+func NewSimpleJWTService(secret string) *SimpleJWTService {
+	return &SimpleJWTService{secret: secret}
+}
+
+func (s *SimpleJWTService) GenerateToken(userID int64, username string, exp time.Duration) (string, error) {
+	claims := jwt.MapClaims{
+		"user_id":  userID,
+		"username": username,
+		"exp":      time.Now().Add(exp).Unix(),
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte(s.secret))
+}
 
 func main() {
 	config.LoadEnv()
@@ -43,8 +98,8 @@ func main() {
 
 	// Initialize AuthHandler dependencies
 	userRepo := authrepo.NewUserRepository(db)
-	// otpService := /* initialize your OTPService implementation */
-	// jwtService := /* initialize your JWTService implementation */
+	otpService := NewInMemoryOTPService()
+	jwtService := NewSimpleJWTService("your-secret-key")
 	authUC := authusecase.NewAuthUsecase(userRepo, otpService, jwtService)
 	authH := authhandler.NewAuthHandler(authUC)
 
