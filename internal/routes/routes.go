@@ -12,6 +12,13 @@ func RegisterRoutes(app *fiber.App, h *handler.URLHandler) {
 	api.Post("/shorten", h.CreateShortURL)
 	api.Delete("/shorten/:code", h.DeleteShortURL)
 
+	// User routes (example)
+	// import user handler and usecase at the top
+	// userHandler := userhandler.NewUserHandler(userUsecase)
+	// api := app.Group("/api")
+	// api.Post("/users/register", userHandler.Register)
+	// api.Get("/users/:id", userHandler.GetByID)
+
 	// auth := api.Group("/auth")
 	// admin := api.Group("/admin")
 

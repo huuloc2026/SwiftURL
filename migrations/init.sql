@@ -21,3 +21,11 @@ CREATE TABLE IF NOT EXISTS click_logs (
   ip_address INET,          -- e.g. 192.168.1.1
   FOREIGN KEY (short_code) REFERENCES short_urls(short_code)
 );
+
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(64) UNIQUE NOT NULL,
+    email VARCHAR(128) UNIQUE NOT NULL,
+    password TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
