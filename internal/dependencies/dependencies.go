@@ -6,7 +6,7 @@ import (
 	"github.com/huuloc2026/SwiftURL/internal/auth/usecase"
 	userHandler "github.com/huuloc2026/SwiftURL/internal/shorturl/delivery/http"
 	"github.com/huuloc2026/SwiftURL/internal/shorturl/repository"
-	"github.com/huuloc2026/SwiftURL/internal/shorturl/usecase"
+
 	"github.com/huuloc2026/SwiftURL/pkg/database"
 )
 
