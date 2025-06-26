@@ -1,4 +1,4 @@
-// package dependencies
+package dependencies
 
 // import (
 // 	authHandler "github.com/huuloc2026/SwiftURL/internal/auth/delivery/http"
