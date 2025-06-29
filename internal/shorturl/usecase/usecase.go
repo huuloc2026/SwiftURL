@@ -2,7 +2,9 @@ package usecase
 
 import (
 	"context"
+	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/huuloc2026/SwiftURL/internal/entity"
@@ -43,26 +45,35 @@ func (u *shortURLUsecase) Shorten(ctx context.Context, longURL string) (*entity.
 	if err != nil {
 		return nil, err
 	}
+
 	return url, nil
 }
 
 func (u *shortURLUsecase) Generate(ctx context.Context, longURL string, customCode *string, expireAt *time.Time) (string, error) {
 	var code string
+
 	if customCode != nil {
-		// Custom code → kiểm tra đã tồn tại chưa
 		existing, err := u.repo.FindByCode(ctx, *customCode)
-		if err == nil && existing != nil {
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return "", fmt.Errorf("error checking custom code: %w", err)
+		}
+		if existing != nil {
 			return "", errors.New("short code already exists")
 		}
 		code = *customCode
 	} else {
-		// Sinh mã ngẫu nhiên và kiểm trùng
-		for {
-			code = utils.GenerateShortCode(8)
-			existing, _ := u.repo.FindByCode(ctx, code)
-			if existing == nil {
+		const maxAttempts = 100
+		for i := 0; i < maxAttempts; i++ {
+			candidate := utils.GenerateShortCode(8)
+			existing, err := u.repo.FindByCode(ctx, candidate)
+			if err != nil && !errors.Is(err, sql.ErrNoRows) {
+				return "", fmt.Errorf("error checking generated code: %w", err)
+			}
+			if existing != nil {
+				code = candidate
 				break
 			}
+
 		}
 	}
 
@@ -73,9 +84,11 @@ func (u *shortURLUsecase) Generate(ctx context.Context, longURL string, customCo
 		ExpireAt:  expireAt,
 		Clicks:    0,
 	}
+
 	if err := u.repo.Store(ctx, short); err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to store short url: %w", err)
 	}
+
 	return code, nil
 }
 

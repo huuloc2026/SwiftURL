@@ -14,6 +14,7 @@ import (
 )
 
 type Dependencies struct {
+	userHandler *userrepo.UserRepository
 	URLHandler  *urlhandler.URLHandler
 	AuthHandler *authhandler.AuthHandler
 }
@@ -23,6 +24,9 @@ func InitDependencies(db *sqlx.DB) *Dependencies {
 	urlRepo := urlrepo.NewShortURLRepository(db)
 	urlUC := urlusecase.NewShortURLUsecase(urlRepo)
 	urlHandler := urlhandler.NewURLHandler(urlUC)
+
+	//User module
+	// userhandler := urlHandler.
 
 	// Auth module
 	userRepo := userrepo.NewUserRepository(db)
@@ -44,6 +48,9 @@ func RegisterRoutes(app *fiber.App, deps *Dependencies) {
 	api.Post("/shorten", deps.URLHandler.CreateShortURL)
 	api.Delete("/shorten/:code", deps.URLHandler.DeleteShortURL)
 
+	//User
+	// api.Get("/user/:id", deps.URLHandler.GetUserByID)
+	// api.Get("/user", deps.URLHandler.ListUsers)
 	// Auth routes under /api/auth/
 	auth := api.Group("/auth")
 	auth.Post("/login", deps.AuthHandler.Login)

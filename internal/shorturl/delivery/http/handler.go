@@ -51,6 +51,7 @@ func (h *URLHandler) ShortenURL(c *fiber.Ctx) error {
 
 // POST /api/shorten
 func (h *URLHandler) CreateShortURL(ctx *fiber.Ctx) error {
+
 	var req CreateShortURLRequest
 
 	if err := ctx.BodyParser(&req); err != nil {
