@@ -52,6 +52,7 @@ func (h *URLHandler) ShortenURL(c *fiber.Ctx) error {
 // POST /api/shorten
 func (h *URLHandler) CreateShortURL(ctx *fiber.Ctx) error {
 	var req CreateShortURLRequest
+
 	if err := ctx.BodyParser(&req); err != nil {
 		return response.Error(ctx, fiber.StatusBadRequest, err, "invalid request body")
 	}
@@ -94,7 +95,12 @@ func (h *URLHandler) ResolveURL(c *fiber.Ctx) error {
 
 	// 👇 Launch safe async tracking
 	go h.usecase.TrackClick(context.Background(), meta)
-	return c.Redirect(result.LongURL, http.StatusMovedPermanently)
+	return response.Success(c, fiber.Map{
+		"short_code": code,
+		"long_url":   result.LongURL,
+	})
+	// Uncomment the next line to redirect instead of returning JSON
+	// return c.Redirect(result.LongURL, http.StatusMovedPermanently)
 }
 
 // DELETE /api/shorten/:shortCode

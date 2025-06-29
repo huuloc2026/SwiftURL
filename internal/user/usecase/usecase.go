@@ -3,9 +3,15 @@ package usecase
 import (
 	"context"
 	"errors"
+
 	"github.com/huuloc2026/SwiftURL/internal/entity"
 	"github.com/huuloc2026/SwiftURL/internal/user/repository"
+	"golang.org/x/crypto/bcrypt"
 )
+
+type ctxKey string
+
+const usernameCtxKey ctxKey = "username"
 
 type UserUsecase interface {
 	Register(ctx context.Context, username, email, password string) (int64, error)
@@ -24,14 +30,12 @@ func NewUserUsecase(repo repository.UserRepository) UserUsecase {
 }
 
 func (u *userUsecase) Register(ctx context.Context, username, email, password string) (int64, error) {
-	// TODO: hash password before storing
 	if username == "" || email == "" || password == "" {
 		return 0, errors.New("username, email, and password cannot be empty")
 	}
 	if len(password) < 6 {
 		return 0, errors.New("password must be at least 6 characters long")
 	}
-	// Check if username already exists
 	if len(username) < 3 || len(username) > 20 {
 		return 0, errors.New("username must be between 3 and 20 characters long")
 	}
@@ -40,18 +44,22 @@ func (u *userUsecase) Register(ctx context.Context, username, email, password st
 	}
 	if len(password) < 6 || len(password) > 100 {
 		return 0, errors.New("password must be between 6 and 100 characters long")
-
 	}
 	// Check if username already exists
-	ctx = context.WithValue(ctx, "username", username)
+	ctx = context.WithValue(ctx, usernameCtxKey, username)
 	existing, _ := u.repo.FindByUsername(ctx, username)
 	if existing != nil {
 		return 0, errors.New("username already exists")
 	}
+	// Hash password before storing
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return 0, errors.New("failed to hash password")
+	}
 	user := &entity.User{
 		Username: username,
 		Email:    email,
-		Password: password,
+		Password: string(hashedPassword),
 	}
 	return u.repo.Create(ctx, user)
 }

@@ -2,6 +2,7 @@ package response
 
 import (
 	"log"
+	"os"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -20,8 +21,18 @@ func Error(c *fiber.Ctx, status int, err error, publicMsg string) error {
 	if err != nil {
 		log.Printf("error: %v", err)
 	}
+	env := os.Getenv("ENV")
+	showDetail := env == "development" || env == "debug"
+	msg := publicMsg
+	if msg == "" {
+		if showDetail && err != nil {
+			msg = err.Error()
+		} else {
+			msg = "An error occurred"
+		}
+	}
 	return c.Status(status).JSON(fiber.Map{
 		"success": false,
-		"error":   publicMsg,
+		"error":   msg,
 	})
 }
