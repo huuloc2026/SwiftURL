@@ -46,7 +46,8 @@ func RegisterRoutes(app *fiber.App, deps *Dependencies) {
 	app.Get("/:code", deps.URLHandler.ResolveURL)
 	api := app.Group("/api")
 	api.Post("/shorten", deps.URLHandler.CreateShortURL)
-	api.Delete("/shorten/:code", deps.URLHandler.DeleteShortURL)
+	api.Put("/shorten/:shortCode", deps.URLHandler.UpdateShortURL)
+	api.Delete("/shorten/:shortCode", deps.URLHandler.DeleteShortURL)
 
 	//User
 	// api.Get("/user/:id", deps.URLHandler.GetUserByID)

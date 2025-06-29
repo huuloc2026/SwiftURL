@@ -16,6 +16,7 @@ type ShortURLUsecase interface {
 	Generate(ctx context.Context, longURL string, customCode *string, expireAt *time.Time) (string, error)
 	Shorten(ctx context.Context, longURL string) (*entity.ShortURL, error)
 	Resolve(ctx context.Context, shortCode string) (*entity.ShortURL, error)
+	UpdateCode(ctx context.Context, code string, custom_code string, longURL string, expireAt *time.Time) (*entity.ShortURL, error)
 	Delete(ctx context.Context, code string) error
 	//TrackClick
 	TrackClick(ctx context.Context, log *entity.ClickLog) error
@@ -107,6 +108,33 @@ func (u *shortURLUsecase) Resolve(ctx context.Context, code string) (*entity.Sho
 	_ = u.repo.IncrementClick(ctx, code)
 
 	return url, nil
+}
+
+func (u *shortURLUsecase) UpdateCode(ctx context.Context, code string, custom_code string, longURL string, expireAt *time.Time) (*entity.ShortURL, error) {
+	existing, err := u.repo.FindByCode(ctx, code)
+
+	if err != nil {
+		return nil, fmt.Errorf("error checking existing code: %w", err)
+	}
+	if existing == nil {
+		return nil, errors.New("short code does not exist")
+	}
+	fmt.Println("Existing URL:", code)
+	fmt.Print("Custom Code:", custom_code)
+
+	var expireAtStr *string
+	if expireAt != nil {
+		str := expireAt.Format(time.RFC3339)
+		expireAtStr = &str
+	}
+
+	updatedURL, err := u.repo.UpdateCode(ctx, code, longURL, expireAtStr)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to update short url: %w", err)
+	}
+
+	return updatedURL, nil
 }
 
 func (u *shortURLUsecase) TrackClick(ctx context.Context, log *entity.ClickLog) error {

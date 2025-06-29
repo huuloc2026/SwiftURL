@@ -20,6 +20,13 @@ const (
 		SELECT EXISTS (SELECT 1 FROM ` + tableShortURLs + ` WHERE short_code = $1)
 	`
 
+	sqlUpdateCode = `
+		UPDATE ` + tableShortURLs + ` 
+		SET long_url = $1, expire_at = $2
+		WHERE short_code = $3
+		RETURNING *
+	`
+
 	sqlDeleteByCode = `
 		DELETE FROM ` + tableShortURLs + ` WHERE short_code = $1
 	`

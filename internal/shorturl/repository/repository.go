@@ -19,6 +19,8 @@ type ShortURLRepository interface {
 	FindByCode(ctx context.Context, code string) (*entity.ShortURL, error)
 	IncrementClick(ctx context.Context, code string) error
 	DeleteByCode(ctx context.Context, code string) error
+	ExistsByCode(ctx context.Context, code string) (bool, error)
+	UpdateCode(ctx context.Context, code string, longURL string, expireAt *string) (*entity.ShortURL, error)
 
 	//CLICK LOG
 	InsertClickLog(ctx context.Context, log *entity.ClickLog) error
@@ -72,6 +74,16 @@ func (r *shortURLRepo) ExistsByCode(ctx context.Context, code string) (bool, err
 		return false, fmt.Errorf("failed to check existence")
 	}
 	return exists, err
+}
+
+func (r *shortURLRepo) UpdateCode(ctx context.Context, code string, longURL string, expireAt *string) (*entity.ShortURL, error) {
+	var url entity.ShortURL
+
+	err := r.db.GetContext(ctx, &url, sqlUpdateCode, longURL, expireAt, code)
+	if err != nil && !isSensitiveError() {
+		return nil, fmt.Errorf("failed to update short url")
+	}
+	return &url, err
 }
 
 func (r *shortURLRepo) DeleteByCode(ctx context.Context, code string) error {

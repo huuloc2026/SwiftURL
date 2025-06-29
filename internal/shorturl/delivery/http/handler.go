@@ -34,6 +34,12 @@ type CreateShortURLResponse struct {
 	ShortCode string `json:"short_code"`
 }
 
+type UpdateShortURLRequest struct {
+	LongURL    string  `json:"long_url" binding:"required,url"`
+	CustomCode *string `json:"custom_code,omitempty"`
+	ExpireAt   *string `json:"expire_at,omitempty"`
+}
+
 func (h *URLHandler) ShortenURL(c *fiber.Ctx) error {
 	var req shortenRequest
 	if err := c.BodyParser(&req); err != nil || req.URL == "" {
@@ -102,6 +108,45 @@ func (h *URLHandler) ResolveURL(c *fiber.Ctx) error {
 	})
 	// Uncomment the next line to redirect instead of returning JSON
 	// return c.Redirect(result.LongURL, http.StatusMovedPermanently)
+}
+
+// PUT /api/shorten/:shortCode
+func (h *URLHandler) UpdateShortURL(ctx *fiber.Ctx) error {
+	code := ctx.Params("shortCode")
+	var req UpdateShortURLRequest
+
+	if req.CustomCode != nil && *req.CustomCode == "" {
+		return response.Error(ctx, fiber.StatusBadRequest, nil, "custom_code cannot be empty")
+	}
+
+	if err := ctx.BodyParser(&req); err != nil {
+		return response.Error(ctx, fiber.StatusBadRequest, err, "invalid request body")
+	}
+
+	if req.LongURL == "" {
+		return response.Error(ctx, fiber.StatusBadRequest, nil, "long_url is required")
+	}
+
+	var expireTime *time.Time
+	if req.ExpireAt != nil {
+		t, err := time.Parse(time.RFC3339, *req.ExpireAt)
+		if err != nil {
+			return response.Error(ctx, fiber.StatusBadRequest, err, "invalid expire_at format (use RFC3339)")
+		}
+		expireTime = &t
+	}
+	// Check if the custom code is provided
+
+	result, err := h.usecase.UpdateCode(ctx.Context(), code, *req.CustomCode, req.LongURL, expireTime)
+
+	if err != nil {
+		return response.Error(ctx, fiber.StatusInternalServerError, err, "failed to update short url")
+	}
+
+	return response.Success(ctx, fiber.Map{
+		"short_code": result.ShortCode,
+		"long_url":   result.LongURL,
+	})
 }
 
 // DELETE /api/shorten/:shortCode

@@ -58,6 +58,16 @@ func TestShortURLSQLQueries(t *testing.T) {
 			},
 		},
 		{
+			name:  "UpdateCode",
+			query: sqlUpdateCode,
+			contains: []string{
+				"UPDATE short_urls",
+				"SET long_url = $1, expire_at = $2",
+				"WHERE short_code = $3",
+				"RETURNING *",
+			},
+		},
+		{
 			name:  "queryInsertClickLog",
 			query: queryInsertClickLog,
 			contains: []string{
